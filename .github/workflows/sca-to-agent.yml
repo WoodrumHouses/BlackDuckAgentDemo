@@ -13,6 +13,10 @@ on:
           - mock
           - blackduck  # Ready for real integration later
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   create-issues:
     runs-on: ubuntu-latest
