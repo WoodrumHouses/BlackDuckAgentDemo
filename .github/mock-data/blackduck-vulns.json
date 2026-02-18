@@ -1,0 +1,44 @@
+{
+  "totalCount": 3,
+  "items": [
+    {
+      "componentName": "lodash",
+      "componentVersionName": "4.17.20",
+      "vulnerabilityWithRemediation": {
+        "vulnerabilityName": "CVE-2021-23337",
+        "description": "Lodash versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+        "severity": "HIGH",
+        "overallScore": 7.2,
+        "fixedVersion": "4.17.21",
+        "remediationStatus": "NEW",
+        "publishedDate": "2021-02-15"
+      }
+    },
+    {
+      "componentName": "axios",
+      "componentVersionName": "0.21.1",
+      "vulnerabilityWithRemediation": {
+        "vulnerabilityName": "CVE-2023-45857",
+        "description": "Axios before 1.6.0 inadvertently exposes confidential XSRF-TOKEN stored in cookies by including it in every request HTTP header X-XSRF-TOKEN.",
+        "severity": "CRITICAL",
+        "overallScore": 9.1,
+        "fixedVersion": "1.6.0",
+        "remediationStatus": "NEW",
+        "publishedDate": "2023-11-08"
+      }
+    },
+    {
+      "componentName": "jsonwebtoken",
+      "componentVersionName": "8.5.1",
+      "vulnerabilityWithRemediation": {
+        "vulnerabilityName": "CVE-2022-23529",
+        "description": "Versions of jsonwebtoken before 9.0.0 are vulnerable to Unrestricted Key Type, allowing attackers to remotely execute code via jwt.verify.",
+        "severity": "HIGH",
+        "overallScore": 7.6,
+        "fixedVersion": "9.0.0",
+        "remediationStatus": "NEW",
+        "publishedDate": "2022-12-21"
+      }
+    }
+  ]
+}

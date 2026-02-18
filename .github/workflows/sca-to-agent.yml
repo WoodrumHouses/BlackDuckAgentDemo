@@ -1,0 +1,114 @@
+# .github/workflows/sca-to-agent.yml
+name: SCA Vulnerability → Issue → Agent Remediation
+
+on:
+  workflow_dispatch:
+    inputs:
+      scan_source:
+        description: 'Vulnerability data source'
+        required: true
+        default: 'mock'
+        type: choice
+        options:
+          - mock
+          - blackduck  # Ready for real integration later
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    outputs:
+      issues_created: ${{ steps.create.outputs.issues_created }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load SCA Vulnerability Data
+        id: load
+        run: |
+          if [ "${{ inputs.scan_source }}" == "mock" ]; then
+            echo "Using mock Black Duck data"
+            cp .github/mock-data/blackduck-vulns.json vulns.json
+          else
+            # Real Black Duck API call would go here
+            echo "Black Duck integration placeholder"
+          fi
+
+      - name: Create Issues from SCA Findings
+        id: create
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const vulns = JSON.parse(fs.readFileSync('vulns.json', 'utf8'));
+            const created = [];
+
+            for (const item of vulns.items) {
+              const { componentName, componentVersionName } = item;
+              const v = item.vulnerabilityWithRemediation;
+
+              // Check for existing issue to avoid duplicates
+              const existing = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: `sca,${v.vulnerabilityName}`,
+                state: 'open'
+              });
+
+              if (existing.data.length > 0) {
+                console.log(`Skipping ${v.vulnerabilityName} — issue already exists`);
+                continue;
+              }
+
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[SCA] ${v.vulnerabilityName}: ${componentName}@${componentVersionName}`,
+                body: [
+                  `## SCA Vulnerability Detected`,
+                  ``,
+                  `| Field | Value |`,
+                  `|-------|-------|`,
+                  `| **CVE** | [${v.vulnerabilityName}](https://nvd.nist.gov/vuln/detail/${v.vulnerabilityName}) |`,
+                  `| **Component** | \`${componentName}\` |`,
+                  `| **Current Version** | \`${componentVersionName}\` |`,
+                  `| **Fixed Version** | \`${v.fixedVersion}\` |`,
+                  `| **Severity** | ${v.severity} (CVSS: ${v.overallScore}) |`,
+                  `| **Published** | ${v.publishedDate} |`,
+                  ``,
+                  `### Description`,
+                  v.description,
+                  ``,
+                  `### Recommended Remediation`,
+                  `Update \`${componentName}\` from \`${componentVersionName}\` → \`${v.fixedVersion}\` in \`package.json\`.`,
+                  ``,
+                  `---`,
+                  `*Detected by Black Duck SCA scan — auto-assigned to agent for remediation.*`,
+                  ``,
+                  `<!-- AGENT-METADATA`,
+                  `component: ${componentName}`,
+                  `current_version: ${componentVersionName}`,
+                  `fixed_version: ${v.fixedVersion}`,
+                  `severity: ${v.severity}`,
+                  `ecosystem: npm`,
+                  `-->`,
+                ].join('\n'),
+                labels: ['sca', v.severity.toLowerCase(), v.vulnerabilityName, 'agent-remediation']
+              });
+
+              // Assign to Copilot coding agent
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.data.number,
+                assignees: ['copilot']
+              });
+
+              created.push(`#${issue.data.number} — ${v.vulnerabilityName}`);
+              console.log(`Created issue #${issue.data.number} for ${v.vulnerabilityName}`);
+            }
+
+            core.setOutput('issues_created', created.join(', '));
+
+      - name: Summary
+        run: |
+          echo "### SCA Issues Created" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.create.outputs.issues_created }}" >> $GITHUB_STEP_SUMMARY
