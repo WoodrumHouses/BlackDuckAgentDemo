@@ -1,5 +1,7 @@
 # Black Duck SCA → Copilot Agent Remediation Demo
 
+> **⚠️ Security Notice:** This repository **intentionally** includes dependencies with known vulnerabilities for demonstration purposes. **Do not use this code in production.** The vulnerable packages are part of the demo to showcase automated SCA remediation.
+
 This project demonstrates an automated vulnerability remediation pipeline that bridges **Black Duck Software Composition Analysis (SCA)** with the **GitHub Copilot coding agent**.
 
 ## How It Works
